@@ -1,7 +1,6 @@
 from crewai import Crew, Task, Agent, Process, LLM
 from pydantic import BaseModel
 from crewai.tools.structured_tool import CrewStructuredTool
-from langchain_community.tools import BraveSearch
 import os
 from dotenv import load_dotenv
 from crewai_tools import SerperDevTool
@@ -18,15 +17,12 @@ base_url= "https://openrouter.ai/api/v1",
 api_key=os.getenv("OPENAI_API_KEY"))
 
 # deepseek_r1 = LLM( model="openrouter/deepseek/deepseek-r1", base_url="https://openrouter.ai/api/v1", api_key=os.getenv("OPEN_ROUTER_API_KEY"), )
-
-#os.environ["SERPER_API_KEY"] = getpass("Enter SERPER_API_KEY: ")
 os.environ["SERPER_API_KEY"] = os.getenv("SERPER_API_KEY")
-# Create the BraveSearch tool
 SearchTool = SerperDevTool()
 
-# Define agents
-web_researcher_agent = Agent(
-    role="Web Research Specialist",
+# Bring on agents
+researcher_agent = Agent(
+    role="Stock Research Specialist",
     goal=(
         "To find the most recent, impactful, and relevant about {topic}. This includes identifying "
         "key strenghts, weakness, and other critical statistics to help investor make informed decision."
@@ -40,7 +36,7 @@ web_researcher_agent = Agent(
     verbose=True
 )
 
-trend_analyst_agent = Agent(
+analyst_agent = Agent(
     role="Insight Synthesizer",
     goal=(
         "To analyze research findings, extract significant trends, and rank them by industry impact, growth potential, "
@@ -70,21 +66,6 @@ report_writer_agent = Agent(
     verbose=True
 )
  
-proofreader_agent = Agent(
-    role="Polisher of Excellence",
-    goal=(
-        "To refine the report for grammatical accuracy, readability, and formatting, ensuring it meets professional "
-        "publication standards."
-    ),
-    backstory=(
-        "An award-winning editor turned proofreader, you specialize in perfecting written content. Your sharp eye for "
-        "detail ensures every document is flawless."
-    ),
-    tools=[],  
-    llm=deepseek_r1,  
-    verbose=True
-)
- 
 manager_agent = Agent(
     role="Workflow Maestro",
     goal=(
@@ -101,7 +82,7 @@ manager_agent = Agent(
 )
 
 # Define tasks
-web_research_task = Task(
+research_task = Task(
     description=(
         "Conduct web-based research to identify 5-7 of the {topic}. Focus on company strengths and weakness. "
     ),
@@ -110,7 +91,7 @@ web_research_task = Task(
     )
 )
 
-trend_analysis_task = Task(
+analysis_task = Task(
     description=(
         "Analyze the research findings to rank {topic}. "
     ),
@@ -128,24 +109,11 @@ report_writing_task = Task(
         "A structured, professional draft with a clear flow of information. Ensure logical organization and consistent tone."
     )
 )
- 
-proofreading_task = Task(
-    description=(
-        "Refine the draft for grammatical accuracy, coherence, and formatting. Ensure the final document is polished "
-        "and ready for publication."
-    ),
-    expected_output=(
-        "A professional, polished report free of grammatical errors and inconsistencies. Format the document for "
-        "easy readability."
-    )
-)
 
 
 crew = Crew(
-    #agents=[web_researcher_agent, trend_analyst_agent, report_writer_agent, proofreader_agent],
-    agents=[web_researcher_agent, trend_analyst_agent, report_writer_agent],
-    #tasks=[web_research_task, trend_analysis_task, report_writing_task, proofreading_task],
-    tasks=[web_research_task, trend_analysis_task, report_writing_task],
+    agents=[researcher_agent, analyst_agent, report_writer_agent],
+    tasks=[research_task, trend_analysis_task, report_writing_task],
     process=Process.hierarchical,
     manager_agent=manager_agent,
     verbose=True
