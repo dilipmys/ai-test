@@ -9,7 +9,7 @@ from getpass import getpass
 
 load_dotenv()
 
-# os.environ["OPENAI_API_KEY"] = "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"
+
 
 deepseek_r1 = LLM (
 model="openrouter/deepseek/deepseek-r1:free",
